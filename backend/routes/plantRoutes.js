@@ -7,15 +7,16 @@ const {
   waterPlant,
   deletePlant,
 } = require("../controllers/plantControllers");
+const { protect } = require("../middleware/authMiddleware");
 
-router.get("/", getPlants);
+router.get("/", protect, getPlants);
 
-router.post("/", addPlant);
+router.post("/", protect, addPlant);
 
-router.put("/:id", updatePlant);
+router.put("/:id", protect, updatePlant);
 
-router.put("/water/:id", waterPlant);
+router.put("/water/:id", protect, waterPlant);
 
-router.delete("/:id", deletePlant);
+router.delete("/:id", protect, deletePlant);
 
 module.exports = router;

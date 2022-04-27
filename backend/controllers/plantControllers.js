@@ -1,8 +1,9 @@
 const asyncHandler = require("express-async-handler");
 const Plant = require("../models/plantModel");
+const User = require("../models/userModel");
 
 const getPlants = asyncHandler(async (req, res) => {
-  const plants = await Plant.find();
+  const plants = await Plant.find({ user: req.user.id });
 
   res.status(200).json(plants);
 });
@@ -21,6 +22,7 @@ const addPlant = asyncHandler(async (req, res) => {
     plant_name: req.body.plant_name,
     plant_type: req.body.plant_type,
     plant_schedule: req.body.plant_schedule,
+    user: req.user.id,
   });
 
   res.status(200).json(plant);
@@ -39,6 +41,19 @@ const updatePlant = asyncHandler(async (req, res) => {
   if (!plant) {
     res.status(400);
     throw new Error("Plant not found.");
+  }
+
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    res.status(401);
+    throw new Error("User Not Found");
+  }
+
+  // Check that the authenticated user matches the owner of the plant
+  if (plant.user.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User Not Authorised");
   }
 
   const updatedPlant = await Plant.findByIdAndUpdate(
@@ -89,7 +104,18 @@ const deletePlant = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Plant not found.");
   }
+  const user = await User.findById(req.user.id);
 
+  if (!user) {
+    res.status(401);
+    throw new Error("User Not Found");
+  }
+
+  // Check that the authenticated user matches the owner of the plant
+  if (plant.user.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User Not Authorised");
+  }
   await plant.remove();
 
   res.status(200).json({
